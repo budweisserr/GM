@@ -9,6 +9,8 @@ public:
     Point(double x = 0, double y = 0) : m_x(x), m_y(y) {}
     double x() const { return m_x; }
     double y() const { return m_y; }
+    void setX(double x) { m_x = x; }
+    void setY(double y) { m_y = y; }
 
     void transform (double **matrix) {
         double vx = m_x * matrix[0][0] + m_y * matrix[1][0] + matrix[2][0];
