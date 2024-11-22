@@ -13,6 +13,7 @@
 #include <QPaintEvent>
 #include "grid.h"
 #include "drawing_interface.h"
+#include "figure.h"
 
 class Draw : public QObject, public QGraphicsItem {
     Q_OBJECT
@@ -41,7 +42,7 @@ protected:
 
 private:
     std::unique_ptr<CoordinateGrid> m_grid;
-    Drawable *m_figure;
+    std::unique_ptr<Figure> m_figure;
 
     void updateScene();
     int m_gridSize = 10;

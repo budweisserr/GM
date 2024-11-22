@@ -4,8 +4,8 @@
 #define log(x) std::cout << x << std::endl;
 
 Draw::Draw(QGraphicsScene* scene)
-    : m_grid(new CoordinateGrid())
-      //m_figure(new Drawable()),
+    : m_grid(new CoordinateGrid()),
+      m_figure(new Figure())
       {
     if (scene) {
         scene->addItem(this);
@@ -24,7 +24,7 @@ void Draw::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWid
     painter->scale(1, -1);
     painter->translate(widget->width(), -widget->height());
     m_grid->draw(painter);
-    //m_figure->draw(painter);
+    m_figure->draw(painter);
 }
 
 
@@ -88,6 +88,7 @@ void Draw::wheelEvent(QWheelEvent* event) {
 
 void Draw::updateScene() {
     m_grid->computeGrid(m_gridSize, m_pixelsPerCm);
+    m_figure->computeFigure(m_pixelsPerCm);
     update();
 }
 
@@ -120,6 +121,7 @@ void Draw::applyAffineTransformation(double Xx, double Xy, double Yx, double Yy,
 
 
     m_grid->transform(matrix);
+    m_figure->transform(matrix);
     update();
 }
 
@@ -147,6 +149,7 @@ void Draw::applyProjectiveTransformation(double Xx, double Xy, double Xw, double
 
     log ("-----------------");
     m_grid->transform(matrix);
+    m_figure->transform(matrix);
     update();
 }
 
