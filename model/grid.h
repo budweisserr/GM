@@ -9,11 +9,10 @@ class CoordinateGrid : public Drawable {
 public:
     void draw(QPainter* painter) override;
     explicit CoordinateGrid() = default;
-    ~CoordinateGrid() = default;
+    ~CoordinateGrid() override = default;
     void computeGrid(int& gridSize, double& pixelsPerCm);
 
-    double getGridArea(double pixelsPerCm) const;
-    double calculateArea(double& pixelsPerCm) const;
+    QRectF boundingRect() const;
 
     public slots:
     void transform(double **matrix);
