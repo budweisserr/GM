@@ -22,27 +22,24 @@ void Draw::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWid
     painter->fillRect(boundingRect(), Qt::white);
 
     painter->scale(1, -1);
-    painter->translate(widget->width(), -widget->height());
+    painter->translate(widget->width() / 2, -widget->height());
+
     m_grid->draw(painter);
     m_figure->draw(painter);
 }
 
 
 QRectF Draw::boundingRect() const {
-    //dynamically change the size of the bounding rectangle with grid area
     return QRectF(0, 0, 10000, 10000);
 }
 
 void Draw::wheelEvent(QGraphicsSceneWheelEvent* event) {
-    constexpr double MIN_PIXELS_PER_CM = 1.0;
-    constexpr double MAX_PIXELS_PER_CM = 200.0;
-
     if (event->delta() > 0) {
-        if (m_pixelsPerCm < MAX_PIXELS_PER_CM) {
+        if (constexpr double MAX_PIXELS_PER_CM = 200.0; m_pixelsPerCm < MAX_PIXELS_PER_CM) {
             m_pixelsPerCm *= 1.2; // Smoother zoom
         }
     } else {
-        if (m_pixelsPerCm > MIN_PIXELS_PER_CM) {
+        if (constexpr double MIN_PIXELS_PER_CM = 1.0; m_pixelsPerCm > MIN_PIXELS_PER_CM) {
             m_pixelsPerCm /= 1.2;
         }
     }
