@@ -9,6 +9,8 @@ class Drawable {
 public:
     virtual ~Drawable() = default;
 
+    //virtual ~Drawable() = default;
+
     virtual void draw(QPainter* painter) = 0;
 };
 
