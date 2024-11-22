@@ -5,6 +5,7 @@
 #include <vector>
 #include "point.h"
 #include "line.h"
+#include <cmath>
 
 
 class Circle {

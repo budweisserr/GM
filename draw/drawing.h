@@ -15,10 +15,10 @@
 #include "drawing_interface.h"
 #include "figure.h"
 
-class Draw : public QObject, public QGraphicsItem {
+class Draw final : public QObject, public QGraphicsItem {
     Q_OBJECT
 public:
-    Draw(QGraphicsScene *scene = nullptr);
+    explicit Draw(QGraphicsScene *scene = nullptr);
     ~Draw() override = default;
    // signals:
     //void pixelsPerCmChanged(double pixelsPerCm);
