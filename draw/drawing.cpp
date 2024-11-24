@@ -46,42 +46,6 @@ void Draw::wheelEvent(QGraphicsSceneWheelEvent* event) {
     updateScene();
     event->accept();
 }
-/*
-void Draw::paintEvent(QPaintEvent* event) {
-    QGraphicsView::paintEvent(event);
-    QPainter painter(viewport());
-    painter.setRenderHint(QPainter::Antialiasing);
-
-    painter.fillRect(event->rect(), Qt::white);
-
-    painter.scale(1, -1);
-    painter.translate(width() / 2, -height() / 2);
-    m_grid->draw(&painter);
-    //m_figure->draw(&painter);
-}
-
-void Draw::resizeEvent(QResizeEvent* event) {
-    QWidget::resizeEvent(event);
-    updateScene();
-}
-
-void Draw::wheelEvent(QWheelEvent* event) {
-    constexpr double MIN_PIXELS_PER_CM = 1.0;
-    constexpr double MAX_PIXELS_PER_CM = 200.0;
-
-    if (event->angleDelta().y() > 0) {
-        if (m_pixelsPerCm < MAX_PIXELS_PER_CM) {
-            m_pixelsPerCm *= 1.2; // Smoother zoom
-        }
-    } else {
-        if (m_pixelsPerCm > MIN_PIXELS_PER_CM) {
-            m_pixelsPerCm /= 1.2;
-        }
-    }
-    updateScene();
-    event->accept();
-}
-*/
 
 void Draw::updateScene() {
     m_grid->computeGrid(m_gridSize, m_pixelsPerCm);
@@ -100,6 +64,10 @@ void Draw::setPixelsPerCm(double pixelsPerCm) {
     updateScene();
 }
 
+void Draw::resetScene() {
+    updateScene();
+}
+
 void Draw::applyAffineTransformation(double Xx, double Xy, double Yx, double Yy, double Ox, double Oy) {
     double **matrix = new double*[3];
     for (int i = 0; i < 3; ++i) {
@@ -114,8 +82,6 @@ void Draw::applyAffineTransformation(double Xx, double Xy, double Yx, double Yy,
     matrix[2][0] = Ox * m_pixelsPerCm;
     matrix[2][1] = Oy * m_pixelsPerCm;
     matrix[2][2] = 1;
-
-
 
     m_grid->transform(matrix);
     m_figure->transform(matrix);
@@ -149,6 +115,48 @@ void Draw::applyProjectiveTransformation(double Xx, double Xy, double Xw, double
     m_figure->transform(matrix);
     update();
 }
+
+void Draw::applyShiftToFigure(double shiftX, double shiftY) {
+    double **matrix = new double*[3];
+    for (int i = 0; i < 3; ++i) {
+        matrix[i] = new double[3];
+    }
+    matrix[0][0] = 1;
+    matrix[0][1] = 0;
+    matrix[0][2] = 0;
+    matrix[1][0] = 0;
+    matrix[1][1] = 1;
+    matrix[1][2] = 0;
+    matrix[2][0] = shiftX * m_pixelsPerCm;
+    matrix[2][1] = shiftY * m_pixelsPerCm;
+    matrix[2][2] = 1;
+
+    m_figure->transform(matrix);
+    update();
+}
+
+void Draw::applyRotateToFigure(double x, double y, double angle) {
+    double **matrix = new double*[3];
+    for (int i = 0; i < 3; ++i) {
+        matrix[i] = new double[3];
+    }
+
+    double rad = angle * M_PI / 180.0;
+    matrix[0][0] = cos(rad);
+    matrix[0][1] = sin(rad);
+    matrix[0][2] = 0;
+    matrix[1][0] = -sin(rad);
+    matrix[1][1] = cos(rad);
+    matrix[1][2] = 0;
+    matrix[2][0] = -x * m_pixelsPerCm * (cos(rad) - 1) + y * m_pixelsPerCm * sin(rad);
+    matrix[2][1] = -x * m_pixelsPerCm * sin(rad) - y * m_pixelsPerCm * (cos(rad) - 1);
+    matrix[2][2] = 1;
+
+    m_figure->transform(matrix);
+    update();
+}
+
+
 
 
 

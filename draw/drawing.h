@@ -27,11 +27,14 @@ public:
     QRectF boundingRect() const override;
 
     public slots:
+    void resetScene();
     void setPixelsPerCm(double pixelsPerCm);
     void setGridSize(int size);
     void applyAffineTransformation(double Xx, double Xy, double Yx, double Yy, double Ox, double Oy);
     void applyProjectiveTransformation(double Xx, double Xy, double Xw, double Yx, double Yy, double Yw, double Ox, double Oy, double Ow);
 
+    void applyShiftToFigure(double shiftX, double shiftY);
+    void applyRotateToFigure(double x, double y, double angle);
 protected:
     /*
     void paintEvent(QPaintEvent* event) override;
@@ -45,7 +48,7 @@ private:
     std::unique_ptr<Figure> m_figure;
 
     void updateScene();
-    int m_gridSize = 10;
+    int m_gridSize = 15;
     double m_pixelsPerCm = 37.795275591;
 
 };
