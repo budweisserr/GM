@@ -29,12 +29,13 @@ public:
     void updateScale(double value);
     void updateGridSize(int value);
     void updateTransformationType(int id) const;
-    void resetTransformation();
 
 private:
     void createControls();
     QWidget* createAffineControls();
     QWidget* createProjectiveControls();
+    QWidget* createShiftControls();
+    QWidget* createRotateControls();
 
     QGraphicsView *m_view;
     QGraphicsScene *m_scene;
@@ -49,10 +50,17 @@ private:
 
     QDoubleSpinBox* m_scaleSpinBox;
     QSpinBox* m_gridSizeSpinBox;
-    QPushButton* m_zoomInButton;
-    QPushButton* m_zoomOutButton;
     QButtonGroup* m_transformationGroup;
     QPushButton* m_resetButton;
+
+    QDoubleSpinBox *m_shiftXSpinBox;
+    QDoubleSpinBox *m_shiftYSpinBox;
+    QPushButton *m_shiftButton;
+
+    QDoubleSpinBox *m_xRotateSpinBox;
+    QDoubleSpinBox *m_yRotateSpinBox;
+    QDoubleSpinBox *m_angleRotateSpinBox;
+    QPushButton *m_rotateButton;
 
     QDoubleSpinBox* XxAffine;
     QDoubleSpinBox* XyAffine;
@@ -77,9 +85,13 @@ private:
     QRadioButton* m_noneRadioButton;
     QRadioButton* m_affineRadioButton;
     QRadioButton* m_projectiveRadioButton;
+    QRadioButton* m_shiftRadioButton;
+    QRadioButton* m_rotateRadioButton;
     QStackedWidget* m_transformationStack;
     QWidget* m_affineControls;
     QWidget* m_projectiveControls;
+    QWidget* m_shiftControls;
+    QWidget* m_rotateControls;
 
     QSplitter *m_splitter;
 

@@ -11,14 +11,11 @@ MainWindow::MainWindow(QWidget *parent)
     m_mainLayout = new QHBoxLayout(m_centralWidget);
     m_controlsLayout = new QVBoxLayout(m_controlsWidget);
 
-    // Create the scene and view
     m_scene = new QGraphicsScene(this);
     m_view = new QGraphicsView(m_scene, this);
 
-    // Create the coordinate grid
     m_draw = new Draw(m_scene);
 
-    // Create and set up controls
     createControls();
 
     m_splitter->addWidget(m_view);
@@ -26,10 +23,8 @@ MainWindow::MainWindow(QWidget *parent)
     m_splitter->setStretchFactor(0, 3);
     m_splitter->setStretchFactor(1, 1);
 
-    // Add widgets to layouts
     m_mainLayout->addWidget(m_splitter);
 
-    // Set initial window properties
     setWindowTitle("Transformations");
     resize(800, 600);
 }
@@ -42,7 +37,6 @@ MainWindow::~MainWindow()
 
 void MainWindow::createControls()
 {
-   // Scale control
     QLabel* scaleLabel = new QLabel("Pixels per cm:", this);
     m_scaleSpinBox = new QDoubleSpinBox(this);
     m_scaleSpinBox->setRange(10.0, 200.0);
@@ -51,57 +45,60 @@ void MainWindow::createControls()
     connect(m_scaleSpinBox,
         QOverload<double>::of(&QDoubleSpinBox::valueChanged),
         m_draw, &Draw::setPixelsPerCm);
-    //connect(m_draw, &Draw::pixelsPerCmChanged, m_scaleSpinBox, &QDoubleSpinBox::setValue);
 
-
-    // Grid size control
     QLabel* sizeLabel = new QLabel("Grid size:", this);
     m_gridSizeSpinBox = new QSpinBox(this);
-    m_gridSizeSpinBox->setRange(1, 50);
-    m_gridSizeSpinBox->setValue(10);
+    m_gridSizeSpinBox->setRange(12, 50);
+    m_gridSizeSpinBox->setValue(15);
     connect(m_gridSizeSpinBox,
          QOverload<int>::of(&QSpinBox::valueChanged),
          m_draw, &Draw::setGridSize);
 
-    // Zoom buttons
-  //  m_zoomInButton = new QPushButton("+", this);
-  //  m_zoomOutButton = new QPushButton("-", this);
-   // connect(m_zoomInButton, &QPushButton::clicked, m_draw, &Draw::zoomIn);
-    //connect(m_zoomOutButton, &QPushButton::clicked, m_draw, &Draw::zoomOut);
-
     m_noneRadioButton = new QRadioButton("None");
+    m_shiftRadioButton = new QRadioButton("Shift");
+    m_rotateRadioButton = new QRadioButton("Rotate");
     m_affineRadioButton = new QRadioButton("Affine");
     m_projectiveRadioButton = new QRadioButton("Projective");
 
     m_transformationGroup = new QButtonGroup(this);
     m_transformationGroup->addButton(m_noneRadioButton, 0);
-    m_transformationGroup->addButton(m_affineRadioButton, 1);
-    m_transformationGroup->addButton(m_projectiveRadioButton, 2);
+    m_transformationGroup->addButton(m_shiftRadioButton, 1);
+    m_transformationGroup->addButton(m_rotateRadioButton, 2);
+    m_transformationGroup->addButton(m_affineRadioButton, 3);
+    m_transformationGroup->addButton(m_projectiveRadioButton, 4);
     connect(m_transformationGroup, SIGNAL(buttonClicked(int)), this, SLOT(updateTransformationType(int)));
 
     m_resetButton = new QPushButton("Reset", this);
-    connect(m_resetButton, &QPushButton::clicked, this, &MainWindow::resetTransformation);
+    connect(m_resetButton, &QPushButton::clicked, m_draw, &Draw::resetScene);
 
-    // Add controls to app
+    m_controlsLayout->setSpacing(5);
+    m_controlsLayout->setContentsMargins(5, 5, 5, 5);
+
     m_transformationStack = new QStackedWidget(this);
     m_affineControls = createAffineControls();
     m_projectiveControls = createProjectiveControls();
-    m_transformationStack->addWidget(new QWidget()); // Empty widget for "None"
+    m_shiftControls = createShiftControls();
+    m_rotateControls = createRotateControls();
+    m_transformationStack->addWidget(new QWidget());
+    m_transformationStack->addWidget(m_shiftControls);
+    m_transformationStack->addWidget(m_rotateControls);
     m_transformationStack->addWidget(m_affineControls);
     m_transformationStack->addWidget(m_projectiveControls);
+    
     m_controlsLayout->addWidget(scaleLabel);
     m_controlsLayout->addWidget(m_scaleSpinBox);
     m_controlsLayout->addSpacing(20);
     m_controlsLayout->addWidget(sizeLabel);
     m_controlsLayout->addWidget(m_gridSizeSpinBox);
     m_controlsLayout->addSpacing(20);
-  //  m_controlsLayout->addWidget(m_zoomInButton);
-   // m_controlsLayout->addWidget(m_zoomOutButton);
-    m_controlsLayout->addSpacing(20);
     m_controlsLayout->addWidget(m_noneRadioButton);
+    m_controlsLayout->addWidget(m_shiftRadioButton);
+    m_controlsLayout->addWidget(m_rotateRadioButton);
     m_controlsLayout->addWidget(m_affineRadioButton);
     m_controlsLayout->addWidget(m_projectiveRadioButton);
+    m_controlsLayout->addSpacing(15);
     m_controlsLayout->addWidget(m_transformationStack);
+    m_controlsLayout->addSpacing(10);
     m_controlsLayout->addWidget(m_resetButton);
     m_controlsLayout->addStretch();
 }
@@ -121,7 +118,6 @@ QWidget* MainWindow::createProjectiveControls()
     auto *projectiveWidget = new QWidget(this);
     m_transformationLayout = new QVBoxLayout(projectiveWidget);
 
-    // Projective transformation controls
     auto* projectiveLabel = new QLabel("Projective Transformation:", this);
     auto* XxProjectiveLabel = new QLabel("Xx:", this);
     XxProjective = new QDoubleSpinBox(this);
@@ -171,7 +167,6 @@ QWidget* MainWindow::createProjectiveControls()
         double Oy = OyProjective->value();
         double Ow = OwProjective->value();
 
-        // Call the transformation function with the retrieved values
         m_draw->applyProjectiveTransformation(Xx, Xy, Xw, Yx, Yy, Yw, Ox, Oy, Ow);
     });
 
@@ -204,7 +199,6 @@ QWidget* MainWindow::createAffineControls()
     auto* affineWidget = new QWidget(this);
     m_transformationLayout = new QVBoxLayout(affineWidget);
 
-    // Affine transformation controls
     auto* affineLabel = new QLabel("Affine Transformation:", this);
     auto* XxAffineLabel = new QLabel("Xx:", this);
     XxAffine = new QDoubleSpinBox(this);
@@ -239,7 +233,6 @@ QWidget* MainWindow::createAffineControls()
         double Ox = OxAffine->value();
         double Oy = OyAffine->value();
 
-        // Call the transformation function with the retrieved values
         m_draw->applyAffineTransformation(Xx, Xy, Yx, Yy, Ox, Oy);
     });
 
@@ -261,12 +254,97 @@ QWidget* MainWindow::createAffineControls()
     return affineWidget;
 }
 
+QWidget* MainWindow::createShiftControls() {
+    auto* shiftWidget = new QWidget(this);
+
+    auto* shiftLayout = new QVBoxLayout(shiftWidget);
+
+    shiftLayout->setSpacing(5);
+    shiftLayout->setContentsMargins(5, 5, 5, 5);
+
+    auto* shiftControlsLayout = new QHBoxLayout();
+    shiftControlsLayout->setSpacing(5);
+
+    QLabel* shiftLabel = new QLabel("Shifting:", this);
+
+    QLabel* shiftXLabel = new QLabel("Shift X:", this);
+    m_shiftXSpinBox = new QDoubleSpinBox(this);
+    m_shiftXSpinBox->setValue(0.0);
+
+    QLabel* shiftYLabel = new QLabel("Shift Y:", this);
+    m_shiftYSpinBox = new QDoubleSpinBox(this);
+    m_shiftYSpinBox->setValue(0.0);
+
+    shiftControlsLayout->addWidget(shiftXLabel);
+    shiftControlsLayout->addWidget(m_shiftXSpinBox);
+    shiftControlsLayout->addWidget(shiftYLabel);
+    shiftControlsLayout->addWidget(m_shiftYSpinBox);
+
+    m_shiftButton = new QPushButton("Apply", this);
+    connect(m_shiftButton, &QPushButton::clicked, [this]() {
+        double shiftX = m_shiftXSpinBox->value();
+        double shiftY = m_shiftYSpinBox->value();
+        m_draw->applyShiftToFigure(shiftX, shiftY);
+    });
+
+    shiftLayout->addWidget(shiftLabel);
+    shiftLayout->addLayout(shiftControlsLayout);
+    shiftLayout->addWidget(m_shiftButton);
+
+    return shiftWidget;
+}
+
+QWidget *MainWindow::createRotateControls() {
+    auto* rotateWidget = new QWidget(this);
+
+    auto* rotateLayout = new QVBoxLayout(rotateWidget);
+
+    rotateLayout->setSpacing(5);
+    rotateLayout->setContentsMargins(5, 5, 5, 5);
+
+    auto* rotateControlsLayout = new QHBoxLayout();
+    rotateControlsLayout->setSpacing(5);
+
+    QLabel *rotateLabel = new QLabel("Rotation:", this);
+
+    QLabel* xLabel = new QLabel("X:", this);
+    m_xRotateSpinBox = new QDoubleSpinBox(this);
+    m_xRotateSpinBox->setValue(0.0);
+
+    QLabel* yLabel = new QLabel("Y:", this);
+    m_yRotateSpinBox = new QDoubleSpinBox(this);
+    m_yRotateSpinBox->setValue(0.0);
+
+    QLabel* angleLable = new QLabel("angle:", this);
+    m_angleRotateSpinBox = new QDoubleSpinBox(this);
+    m_angleRotateSpinBox->setValue(0.0);
+    m_angleRotateSpinBox->setRange(-360.0, 360.0);
+
+    rotateControlsLayout->addWidget(xLabel);
+    rotateControlsLayout->addWidget(m_xRotateSpinBox);
+    rotateControlsLayout->addWidget(yLabel);
+    rotateControlsLayout->addWidget(m_yRotateSpinBox);
+    rotateControlsLayout->addWidget(angleLable);
+    rotateControlsLayout->addWidget(m_angleRotateSpinBox);
+
+    m_rotateButton = new QPushButton("Apply", this);
+    connect(m_rotateButton, &QPushButton::clicked, [this]() {
+        double x = m_xRotateSpinBox->value();
+        double y = m_yRotateSpinBox->value();
+        double angle = m_angleRotateSpinBox->value();
+
+        m_draw->applyRotateToFigure(x, y, angle);
+    });
+
+    rotateLayout->addWidget(rotateLabel);
+    rotateLayout->addLayout(rotateControlsLayout);
+    rotateLayout->addWidget(m_rotateButton);
+
+    return rotateWidget;
+}
+
 void MainWindow::updateTransformationType(const int id) const {
     m_transformationStack->setCurrentIndex(id);
 }
 
-void MainWindow::resetTransformation()
-{
-    return;
-}
 
