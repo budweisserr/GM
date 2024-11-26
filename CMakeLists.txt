@@ -100,6 +100,7 @@ target_include_directories(GeometricTransformation PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/model
         ${CMAKE_CURRENT_SOURCE_DIR}/draw
         ${CMAKE_CURRENT_SOURCE_DIR}/window
+        /usr/include/qt
 )
 
 target_link_libraries(GeometricTransformation PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Core)
