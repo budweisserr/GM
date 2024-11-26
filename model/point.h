@@ -21,7 +21,6 @@ public:
         m_y = vy / w;
     }
 
-
     static QPoint toQPoint(const Point& point) {
         return QPoint(point.x(), point.y());
     }
