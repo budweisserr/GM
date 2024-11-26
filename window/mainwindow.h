@@ -3,6 +3,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QGroupBox>
 #include <QPushButton>
 #include <QRadioButton>
 #include <QSpinBox>
@@ -41,7 +42,7 @@ private:
     QGraphicsScene *m_scene;
 
     Draw* m_draw;
-    QWidget* m_centralWidget;
+    QWidget *m_centralWidget;
     QWidget *m_controlsWidget;
     QWidget *m_sceneWidget;
     QHBoxLayout *m_mainLayout;

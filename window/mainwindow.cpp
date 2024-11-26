@@ -31,6 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
+    delete m_mainLayout;
     delete m_draw;
     delete m_centralWidget;
 }
@@ -71,8 +72,11 @@ void MainWindow::createControls()
     m_resetButton = new QPushButton("Reset", this);
     connect(m_resetButton, &QPushButton::clicked, m_draw, &Draw::resetScene);
 
-    m_controlsLayout->setSpacing(5);
-    m_controlsLayout->setContentsMargins(5, 5, 5, 5);
+    QGroupBox *rectangleGroupBox = new QGroupBox("Transformations", m_controlsWidget);
+    QVBoxLayout *rectangleLayout = new QVBoxLayout(rectangleGroupBox);
+    rectangleLayout->setContentsMargins(10, 10, 10, 10);
+    rectangleLayout->setSpacing(10);
+    rectangleLayout->setAlignment(Qt::AlignTop);
 
     m_transformationStack = new QStackedWidget(this);
     m_affineControls = createAffineControls();
@@ -84,6 +88,10 @@ void MainWindow::createControls()
     m_transformationStack->addWidget(m_rotateControls);
     m_transformationStack->addWidget(m_affineControls);
     m_transformationStack->addWidget(m_projectiveControls);
+
+    rectangleLayout->addWidget(m_transformationStack, 0, Qt::AlignCenter);
+    rectangleGroupBox->setMinimumSize(300, 200);
+    rectangleGroupBox->setMaximumSize(600, 600);
     
     m_controlsLayout->addWidget(scaleLabel);
     m_controlsLayout->addWidget(m_scaleSpinBox);
@@ -96,9 +104,8 @@ void MainWindow::createControls()
     m_controlsLayout->addWidget(m_rotateRadioButton);
     m_controlsLayout->addWidget(m_affineRadioButton);
     m_controlsLayout->addWidget(m_projectiveRadioButton);
-    m_controlsLayout->addSpacing(15);
-    m_controlsLayout->addWidget(m_transformationStack);
-    m_controlsLayout->addSpacing(10);
+    m_controlsLayout->addSpacing(20);
+    m_controlsLayout->addWidget(rectangleGroupBox);
     m_controlsLayout->addWidget(m_resetButton);
     m_controlsLayout->addStretch();
 }
@@ -119,42 +126,75 @@ QWidget* MainWindow::createProjectiveControls()
     m_transformationLayout = new QVBoxLayout(projectiveWidget);
 
     auto* projectiveLabel = new QLabel("Projective Transformation:", this);
+
+    auto* matrixLayout = new QGridLayout();
+
     auto* XxProjectiveLabel = new QLabel("Xx:", this);
     XxProjective = new QDoubleSpinBox(this);
     XxProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     XxProjective->setValue(1.0);
+
     auto* XyProjectiveLabel = new QLabel("Xy:", this);
     XyProjective = new QDoubleSpinBox(this);
     XyProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     XyProjective->setValue(0.0);
+
     auto* XwProjectiveLabel = new QLabel("Xw:", this);
     XwProjective = new QDoubleSpinBox(this);
     XwProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     XwProjective->setValue(0.0);
+
     auto* YxProjectiveLabel = new QLabel("Yx:", this);
     YxProjective = new QDoubleSpinBox(this);
     YxProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     YxProjective->setValue(0.0);
+
     auto* YyProjectiveLabel = new QLabel("Yy:", this);
     YyProjective = new QDoubleSpinBox(this);
     YyProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     YyProjective->setValue(1.0);
+
     auto* YwProjectiveLabel = new QLabel("Yw:", this);
     YwProjective = new QDoubleSpinBox(this);
     YwProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     YwProjective->setValue(0.0);
+
     auto* OxProjectiveLabel = new QLabel("Ox:", this);
     OxProjective = new QDoubleSpinBox(this);
     OxProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     OxProjective->setValue(0.0);
+
     auto* OyProjectiveLabel = new QLabel("Oy:", this);
     OyProjective = new QDoubleSpinBox(this);
     OyProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     OyProjective->setValue(0.0);
+
     auto* OwProjectiveLabel = new QLabel("Ow:", this);
     OwProjective = new QDoubleSpinBox(this);
     OwProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     OwProjective->setValue(1.0);
+
+    matrixLayout->addWidget(XxProjectiveLabel, 0, 0);
+    matrixLayout->addWidget(XxProjective, 0, 1);
+    matrixLayout->addWidget(XyProjectiveLabel, 0, 2);
+    matrixLayout->addWidget(XyProjective, 0, 3);
+    matrixLayout->addWidget(XwProjectiveLabel, 0, 4);
+    matrixLayout->addWidget(XwProjective, 0, 5);
+
+    matrixLayout->addWidget(YxProjectiveLabel, 1, 0);
+    matrixLayout->addWidget(YxProjective, 1, 1);
+    matrixLayout->addWidget(YyProjectiveLabel, 1, 2);
+    matrixLayout->addWidget(YyProjective, 1, 3);
+    matrixLayout->addWidget(YwProjectiveLabel, 1, 4);
+    matrixLayout->addWidget(YwProjective, 1, 5);
+
+    matrixLayout->addWidget(OxProjectiveLabel, 2, 0);
+    matrixLayout->addWidget(OxProjective, 2, 1);
+    matrixLayout->addWidget(OyProjectiveLabel, 2, 2);
+    matrixLayout->addWidget(OyProjective, 2, 3);
+    matrixLayout->addWidget(OwProjectiveLabel, 2, 4);
+    matrixLayout->addWidget(OwProjective, 2, 5);
+
     m_projectiveButton = new QPushButton("Apply", this);
     connect(m_projectiveButton, &QPushButton::clicked, [this]() {
         double Xx = XxProjective->value();
@@ -171,24 +211,7 @@ QWidget* MainWindow::createProjectiveControls()
     });
 
     m_transformationLayout->addWidget(projectiveLabel);
-    m_transformationLayout->addWidget(XxProjectiveLabel);
-    m_transformationLayout->addWidget(XxProjective);
-    m_transformationLayout->addWidget(XyProjectiveLabel);
-    m_transformationLayout->addWidget(XyProjective);
-    m_transformationLayout->addWidget(XwProjectiveLabel);
-    m_transformationLayout->addWidget(XwProjective);
-    m_transformationLayout->addWidget(YxProjectiveLabel);
-    m_transformationLayout->addWidget(YxProjective);
-    m_transformationLayout->addWidget(YyProjectiveLabel);
-    m_transformationLayout->addWidget(YyProjective);
-    m_transformationLayout->addWidget(YwProjectiveLabel);
-    m_transformationLayout->addWidget(YwProjective);
-    m_transformationLayout->addWidget(OxProjectiveLabel);
-    m_transformationLayout->addWidget(OxProjective);
-    m_transformationLayout->addWidget(OyProjectiveLabel);
-    m_transformationLayout->addWidget(OyProjective);
-    m_transformationLayout->addWidget(OwProjectiveLabel);
-    m_transformationLayout->addWidget(OwProjective);
+    m_transformationLayout->addLayout(matrixLayout);
     m_transformationLayout->addWidget(m_projectiveButton);
 
     return projectiveWidget;
@@ -200,30 +223,54 @@ QWidget* MainWindow::createAffineControls()
     m_transformationLayout = new QVBoxLayout(affineWidget);
 
     auto* affineLabel = new QLabel("Affine Transformation:", this);
+
+    auto* matrixLayout = new QGridLayout();
+
     auto* XxAffineLabel = new QLabel("Xx:", this);
     XxAffine = new QDoubleSpinBox(this);
     XxAffine->setRange(-10.0, 10.0);
     XxAffine->setValue(1.0);
+
     auto* XyAffineLabel = new QLabel("Xy:", this);
     XyAffine = new QDoubleSpinBox(this);
     XyAffine->setRange(-10.0, 10.0);
     XyAffine->setValue(0.0);
+
     auto* YxAffineLabel = new QLabel("Yx:", this);
     YxAffine = new QDoubleSpinBox(this);
     YxAffine->setRange(-10.0, 10.0);
     YxAffine->setValue(0.0);
+
     auto* YyAffineLabel = new QLabel("Yy:", this);
     YyAffine = new QDoubleSpinBox(this);
     YyAffine->setRange(-10.0, 10.0);
     YyAffine->setValue(1.0);
+
     auto* OxAffineLabel = new QLabel("Ox:", this);
     OxAffine = new QDoubleSpinBox(this);
     OxAffine->setRange(-10.0, 10.0);
     OxAffine->setValue(0.0);
+
     auto* OyAffineLabel = new QLabel("Oy:", this);
     OyAffine = new QDoubleSpinBox(this);
     OyAffine->setRange(-10.0, 10.0);
     OyAffine->setValue(0.0);
+
+    matrixLayout->addWidget(XxAffineLabel, 0, 0);
+    matrixLayout->addWidget(XxAffine, 0, 1);
+    matrixLayout->addWidget(XyAffineLabel, 0, 2);
+    matrixLayout->addWidget(XyAffine, 0, 3);
+
+    matrixLayout->addWidget(YxAffineLabel, 1, 0);
+    matrixLayout->addWidget(YxAffine, 1, 1);
+    matrixLayout->addWidget(YyAffineLabel, 1, 2);
+    matrixLayout->addWidget(YyAffine, 1, 3);
+
+    matrixLayout->addWidget(OxAffineLabel, 2, 0);
+    matrixLayout->addWidget(OxAffine, 2, 1);
+    matrixLayout->addWidget(OyAffineLabel, 2, 2);
+    matrixLayout->addWidget(OyAffine, 2, 3);
+
     m_affineButton = new QPushButton("Apply", this);
     connect(m_affineButton, &QPushButton::clicked, [this]() {
         double Xx = XxAffine->value();
@@ -237,18 +284,7 @@ QWidget* MainWindow::createAffineControls()
     });
 
     m_transformationLayout->addWidget(affineLabel);
-    m_transformationLayout->addWidget(XxAffineLabel);
-    m_transformationLayout->addWidget(XxAffine);
-    m_transformationLayout->addWidget(XyAffineLabel);
-    m_transformationLayout->addWidget(XyAffine);
-    m_transformationLayout->addWidget(YxAffineLabel);
-    m_transformationLayout->addWidget(YxAffine);
-    m_transformationLayout->addWidget(YyAffineLabel);
-    m_transformationLayout->addWidget(YyAffine);
-    m_transformationLayout->addWidget(OxAffineLabel);
-    m_transformationLayout->addWidget(OxAffine);
-    m_transformationLayout->addWidget(OyAffineLabel);
-    m_transformationLayout->addWidget(OyAffine);
+    m_transformationLayout->addLayout(matrixLayout);
     m_transformationLayout->addWidget(m_affineButton);
 
     return affineWidget;
