@@ -10,7 +10,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets Core)
 
 # Add subdirectories first
 add_subdirectory(model)
@@ -102,7 +102,7 @@ target_include_directories(GeometricTransformation PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/window
 )
 
-target_link_libraries(GeometricTransformation PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(GeometricTransformation PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Core)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 if(${QT_VERSION} VERSION_LESS 6.1.0)
