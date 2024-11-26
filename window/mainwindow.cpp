@@ -40,12 +40,13 @@ void MainWindow::createControls()
 {
     QLabel* scaleLabel = new QLabel("Pixels per cm:", this);
     m_scaleSpinBox = new QDoubleSpinBox(this);
-    m_scaleSpinBox->setRange(10.0, 200.0);
+    m_scaleSpinBox->setRange(0, 200.0);
     m_scaleSpinBox->setValue(37.795275591);
     m_scaleSpinBox->setSingleStep(1.0);
     connect(m_scaleSpinBox,
         QOverload<double>::of(&QDoubleSpinBox::valueChanged),
         m_draw, &Draw::setPixelsPerCm);
+    connect(m_draw, &Draw::pixelsPerCmChanged, m_scaleSpinBox, &QDoubleSpinBox::setValue);
 
     QLabel* sizeLabel = new QLabel("Grid size:", this);
     m_gridSizeSpinBox = new QSpinBox(this);
@@ -58,6 +59,7 @@ void MainWindow::createControls()
     m_noneRadioButton = new QRadioButton("None");
     m_shiftRadioButton = new QRadioButton("Shift");
     m_rotateRadioButton = new QRadioButton("Rotate");
+    m_symmetryRadioButton = new QRadioButton("Symmetry");
     m_affineRadioButton = new QRadioButton("Affine");
     m_projectiveRadioButton = new QRadioButton("Projective");
 
@@ -65,8 +67,9 @@ void MainWindow::createControls()
     m_transformationGroup->addButton(m_noneRadioButton, 0);
     m_transformationGroup->addButton(m_shiftRadioButton, 1);
     m_transformationGroup->addButton(m_rotateRadioButton, 2);
-    m_transformationGroup->addButton(m_affineRadioButton, 3);
-    m_transformationGroup->addButton(m_projectiveRadioButton, 4);
+    m_transformationGroup->addButton(m_symmetryRadioButton, 3);
+    m_transformationGroup->addButton(m_affineRadioButton, 4);
+    m_transformationGroup->addButton(m_projectiveRadioButton, 5);
     connect(m_transformationGroup, SIGNAL(buttonClicked(int)), this, SLOT(updateTransformationType(int)));
 
     m_resetButton = new QPushButton("Reset", this);
@@ -83,9 +86,11 @@ void MainWindow::createControls()
     m_projectiveControls = createProjectiveControls();
     m_shiftControls = createShiftControls();
     m_rotateControls = createRotateControls();
+    m_symmetryControls = createSymmetryControls();
     m_transformationStack->addWidget(new QWidget());
     m_transformationStack->addWidget(m_shiftControls);
     m_transformationStack->addWidget(m_rotateControls);
+    m_transformationStack->addWidget(m_symmetryControls);
     m_transformationStack->addWidget(m_affineControls);
     m_transformationStack->addWidget(m_projectiveControls);
 
@@ -102,6 +107,7 @@ void MainWindow::createControls()
     m_controlsLayout->addWidget(m_noneRadioButton);
     m_controlsLayout->addWidget(m_shiftRadioButton);
     m_controlsLayout->addWidget(m_rotateRadioButton);
+    m_controlsLayout->addWidget(m_symmetryRadioButton);
     m_controlsLayout->addWidget(m_affineRadioButton);
     m_controlsLayout->addWidget(m_projectiveRadioButton);
     m_controlsLayout->addSpacing(20);
@@ -228,32 +234,32 @@ QWidget* MainWindow::createAffineControls()
 
     auto* XxAffineLabel = new QLabel("Xx:", this);
     XxAffine = new QDoubleSpinBox(this);
-    XxAffine->setRange(-10.0, 10.0);
+    XxAffine->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     XxAffine->setValue(1.0);
 
     auto* XyAffineLabel = new QLabel("Xy:", this);
     XyAffine = new QDoubleSpinBox(this);
-    XyAffine->setRange(-10.0, 10.0);
+    XyAffine->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     XyAffine->setValue(0.0);
 
     auto* YxAffineLabel = new QLabel("Yx:", this);
     YxAffine = new QDoubleSpinBox(this);
-    YxAffine->setRange(-10.0, 10.0);
+    YxAffine->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     YxAffine->setValue(0.0);
 
     auto* YyAffineLabel = new QLabel("Yy:", this);
     YyAffine = new QDoubleSpinBox(this);
-    YyAffine->setRange(-10.0, 10.0);
+    YyAffine->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     YyAffine->setValue(1.0);
 
     auto* OxAffineLabel = new QLabel("Ox:", this);
     OxAffine = new QDoubleSpinBox(this);
-    OxAffine->setRange(-10.0, 10.0);
+    OxAffine->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     OxAffine->setValue(0.0);
 
     auto* OyAffineLabel = new QLabel("Oy:", this);
     OyAffine = new QDoubleSpinBox(this);
-    OyAffine->setRange(-10.0, 10.0);
+    OyAffine->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
     OyAffine->setValue(0.0);
 
     matrixLayout->addWidget(XxAffineLabel, 0, 0);
@@ -306,10 +312,12 @@ QWidget* MainWindow::createShiftControls() {
     QLabel* shiftXLabel = new QLabel("Shift X:", this);
     m_shiftXSpinBox = new QDoubleSpinBox(this);
     m_shiftXSpinBox->setValue(0.0);
+    m_shiftXSpinBox->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
 
     QLabel* shiftYLabel = new QLabel("Shift Y:", this);
     m_shiftYSpinBox = new QDoubleSpinBox(this);
     m_shiftYSpinBox->setValue(0.0);
+    m_shiftYSpinBox->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
 
     shiftControlsLayout->addWidget(shiftXLabel);
     shiftControlsLayout->addWidget(m_shiftXSpinBox);
@@ -346,10 +354,12 @@ QWidget *MainWindow::createRotateControls() {
     QLabel* xLabel = new QLabel("X:", this);
     m_xRotateSpinBox = new QDoubleSpinBox(this);
     m_xRotateSpinBox->setValue(0.0);
+    m_xRotateSpinBox->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
 
     QLabel* yLabel = new QLabel("Y:", this);
     m_yRotateSpinBox = new QDoubleSpinBox(this);
     m_yRotateSpinBox->setValue(0.0);
+    m_yRotateSpinBox->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
 
     QLabel* angleLable = new QLabel("angle:", this);
     m_angleRotateSpinBox = new QDoubleSpinBox(this);
@@ -377,6 +387,47 @@ QWidget *MainWindow::createRotateControls() {
     rotateLayout->addWidget(m_rotateButton);
 
     return rotateWidget;
+}
+
+QWidget *MainWindow::createSymmetryControls() {
+    auto *symmetryWidget = new QWidget(this);
+
+    auto *symmetryLayout = new QVBoxLayout(symmetryWidget);
+
+    symmetryLayout->setSpacing(5);
+    symmetryLayout->setContentsMargins(5, 5, 5, 5);
+
+    auto *symmetryControlsLayout = new QHBoxLayout();
+    symmetryControlsLayout->setSpacing(5);
+
+    auto *symmetryLabel = new QLabel("Symmetry:", this);
+    auto *xSymmetryLabel = new QLabel("X:", this);
+    m_xSymmetry = new QDoubleSpinBox(this);
+    m_xSymmetry->setValue(0.0);
+    m_xSymmetry->setRange(-10.0, m_gridSizeSpinBox->value());
+
+    auto *ySymmetryLabel = new QLabel("Y:", this);
+    m_ySymmetry = new QDoubleSpinBox(this);
+    m_ySymmetry->setValue(0.0);
+    m_ySymmetry->setRange(-10.0, m_gridSizeSpinBox->value());
+
+    symmetryControlsLayout->addWidget(xSymmetryLabel);
+    symmetryControlsLayout->addWidget(m_xSymmetry);
+    symmetryControlsLayout->addWidget(ySymmetryLabel);
+    symmetryControlsLayout->addWidget(m_ySymmetry);
+
+    m_symmetryButton = new QPushButton("Apply", this);
+    connect(m_symmetryButton, &QPushButton::clicked, [this]() {
+        double x = m_xSymmetry->value();
+        double y = m_ySymmetry->value();
+        m_draw->applySymmetryToFigure(x, y);
+    });
+
+    symmetryLayout->addWidget(symmetryLabel);
+    symmetryLayout->addLayout(symmetryControlsLayout);
+    symmetryLayout->addWidget(m_symmetryButton);
+
+    return symmetryWidget;
 }
 
 void MainWindow::updateTransformationType(const int id) const {
