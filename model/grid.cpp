@@ -43,34 +43,6 @@ void CoordinateGrid::draw(QPainter *painter) {
     painter->drawLine(Point::toQPoint(m_yAxis.start()), Point::toQPoint(m_yAxis.end()));
 }
 
-QRectF CoordinateGrid::boundingRect() const {
-    if (m_gridLines.empty()) {
-        return QRectF(0, 0, 0, 0);
-    }
-
-    // Initialize bounding box with the first line
-    double minX = m_gridLines[0].start().x();
-    double maxX = m_gridLines[0].start().x();
-    double minY = m_gridLines[0].start().y();
-    double maxY = m_gridLines[0].start().y();
-
-    // Expand bounding box to include all grid lines
-    for (const auto& line : m_gridLines) {
-        minX = std::min({minX, line.start().x(), line.end().x()});
-        maxX = std::max({maxX, line.start().x(), line.end().x()});
-        minY = std::min({minY, line.start().y(), line.end().y()});
-        maxY = std::max({maxY, line.start().y(), line.end().y()});
-    }
-
-    // Expand to include main axes
-    minX = std::min({minX, m_xAxis.start().x(), m_xAxis.end().x()});
-    maxX = std::max({maxX, m_xAxis.start().x(), m_xAxis.end().x()});
-    minY = std::min({minY, m_yAxis.start().y(), m_yAxis.end().y()});
-    maxY = std::max({maxY, m_yAxis.start().y(), m_yAxis.end().y()});
-
-    // Return the bounding rectangle
-    return QRectF(minX, minY, maxX - minX, maxY - minY);
-}
 
 
 

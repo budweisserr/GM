@@ -12,8 +12,6 @@ public:
     ~CoordinateGrid() override = default;
     void computeGrid(int& gridSize, double& pixelsPerCm);
 
-    QRectF boundingRect() const;
-
     public slots:
     void transform(double **matrix);
 protected:

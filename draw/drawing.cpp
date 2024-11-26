@@ -22,7 +22,7 @@ void Draw::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWid
     painter->fillRect(boundingRect(), Qt::white);
 
     painter->scale(1, -1);
-    painter->translate(widget->width() / 2, -widget->height());
+    painter->translate(widget->width() / 3, -widget->height());
 
     m_grid->draw(painter);
     m_figure->draw(painter);
