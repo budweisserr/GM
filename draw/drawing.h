@@ -36,6 +36,10 @@ public:
 
     void applyShiftToFigure(double shiftX, double shiftY);
     void applyRotateToFigure(double x, double y, double angle);
+    void applySymmetryToFigure(double x, double y);
+
+    signals:
+    void pixelsPerCmChanged(double pixelsPerCm);
 protected:
     /*
     void paintEvent(QPaintEvent* event) override;
@@ -51,6 +55,8 @@ private:
     void updateScene();
     int m_gridSize = 15;
     double m_pixelsPerCm = 37.795275591;
+
+    double ** m_matrix;
 
 };
 
