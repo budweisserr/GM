@@ -17,6 +17,7 @@
 
 class Draw final : public QObject, public QGraphicsItem {
     Q_OBJECT
+    Q_INTERFACES(QGraphicsItem)
 public:
     explicit Draw(QGraphicsScene *scene = nullptr);
     ~Draw() override = default;
