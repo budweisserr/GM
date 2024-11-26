@@ -37,6 +37,7 @@ private:
     QWidget* createProjectiveControls();
     QWidget* createShiftControls();
     QWidget* createRotateControls();
+    QWidget* createSymmetryControls();
 
     QGraphicsView *m_view;
     QGraphicsScene *m_scene;
@@ -71,6 +72,10 @@ private:
     QDoubleSpinBox* OyAffine;
     QPushButton* m_affineButton;
 
+    QDoubleSpinBox *m_xSymmetry;
+    QDoubleSpinBox *m_ySymmetry;
+    QPushButton *m_symmetryButton;
+
     QDoubleSpinBox *XxProjective;
     QDoubleSpinBox *XyProjective;
     QDoubleSpinBox *XwProjective;
@@ -88,11 +93,13 @@ private:
     QRadioButton* m_projectiveRadioButton;
     QRadioButton* m_shiftRadioButton;
     QRadioButton* m_rotateRadioButton;
+    QRadioButton* m_symmetryRadioButton;
     QStackedWidget* m_transformationStack;
     QWidget* m_affineControls;
     QWidget* m_projectiveControls;
     QWidget* m_shiftControls;
     QWidget* m_rotateControls;
+    QWidget* m_symmetryControls;
 
     QSplitter *m_splitter;
 
