@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.16)
 
 project(GeometricTransformation VERSION 0.1 LANGUAGES CXX)
 
-set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOUIC OFF)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
@@ -100,7 +100,6 @@ target_include_directories(GeometricTransformation PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/model
         ${CMAKE_CURRENT_SOURCE_DIR}/draw
         ${CMAKE_CURRENT_SOURCE_DIR}/window
-        /usr/include/qt
 )
 
 target_link_libraries(GeometricTransformation PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Core)
