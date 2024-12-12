@@ -6,6 +6,11 @@ void Shape::computeShape(int &gridSize, double &pixelsPerCm) {
     m_pointsLeftUpper.clear();
     m_pointsRightLower.clear();
     m_pointsRightUpper.clear();
+    m_points.resize(0);
+    m_pointsLeftLower.resize(0);
+    m_pointsLeftUpper.resize(0);
+    m_pointsRightLower.resize(0);
+    m_pointsRightUpper.resize(0);
 
     double A = a * a + b * b - d * d;
     double B = b * b - a * a - d * d;
@@ -69,60 +74,23 @@ void Shape::transform(double **matrix) {
     }
 }
 
-double Shape::computeDerivativeX(double x, double y) const {
-    return 4 * (x*x + y*y) * x - 2 * a * a + b * b - d * d * x;
-}
-
-double Shape::computeDerivativeY(double x, double y) const {
-    return 4 * (x*x + y*y) * y - 2 * b * b - a * a - d * d * y;
-}
-
 Line Shape::computeTangent(Point& point) const {
-    double derivativeX = computeDerivativeX(point.x(), point.y());
-    double derivativeY = computeDerivativeY(point.x(), point.y());
-
-    // Normalize the derivative
-    double magnitude = std::sqrt(derivativeX * derivativeX + derivativeY * derivativeY);
-    double normalizedDerivativeX = derivativeX / magnitude;
-    double normalizedDerivativeY = derivativeY / magnitude;
-
-    // Calculate the ends of the tangent line
-    double halfLength = 100 / 2;
-    Point start(
-        point.x() - normalizedDerivativeX * halfLength,
-        point.y() - normalizedDerivativeY * halfLength
-    );
-    Point end(
-        point.x() + normalizedDerivativeX * halfLength,
-        point.y() + normalizedDerivativeY * halfLength
-    );
-
-    return Line(start, end);
+    for (const auto& tangentLine : m_tangentLines) {
+        if (tangentLine.start().x() == point.x() && tangentLine.start().y() == point.y()) {
+            return tangentLine;
+        }
+    }
+    return Line(Point(0, 0), Point(0, 0));
 }
 
 Line Shape::computeNormal(Point& point) const {
-    double derivativeX = computeDerivativeX(point.x(), point.y());
-    double derivativeY = computeDerivativeY(point.x(), point.y());
-
-    // Normalize the derivative
-    double magnitude = std::sqrt(derivativeX * derivativeX + derivativeY * derivativeY);
-    double normalizedDerivativeX = derivativeX / magnitude;
-    double normalizedDerivativeY = derivativeY / magnitude;
-
-    // Calculate the ends of the normal line
-    double halfLength = 100 / 2;
-    Point start(
-        point.x() - normalizedDerivativeY * halfLength,
-        point.y() + normalizedDerivativeX * halfLength
-    );
-    Point end(
-        point.x() + normalizedDerivativeY * halfLength,
-        point.y() - normalizedDerivativeX * halfLength
-    );
-
-    return Line(start, end);
+    for (const auto& normalLine : m_normalLines) {
+        if (normalLine.start().x() == point.x() && normalLine.start().y() == point.y()) {
+            return normalLine;
+        }
+    }
+    return Line(Point(0, 0), Point(0, 0));
 }
-
 void Shape::drawNormal(QPainter *painter, Point& point) {
     Line normal = computeNormal(point);
     painter->setPen(QPen(Qt::red, 2));
@@ -138,6 +106,47 @@ void Shape::drawTangent(QPainter *painter, Point& point) {
 void Shape::drawPoint(QPainter *painter, Point& point) {
     painter->setPen(QPen(Qt::green, 5));
     painter->drawPoint(Point::toQPoint(point));
+}
+
+void Shape::calculateTangentAndNormalLines() {
+    m_tangentLines.clear();
+    m_normalLines.clear();
+
+    for (size_t i = 0; i < m_points.size() - 1; ++i) {
+        const Point& currentPoint = m_points[i];
+        const Point& nextPoint = m_points[i + 1];
+
+        double dx = nextPoint.x() - currentPoint.x();
+        double dy = nextPoint.y() - currentPoint.y();
+        double tangentLength = sqrt(dx * dx + dy * dy);
+
+        double tangentUnitX = dx / tangentLength;
+        double tangentUnitY = dy / tangentLength;
+
+        double scaledTangentX = tangentUnitX * 100;
+        double scaledTangentY = tangentUnitY * 100;
+
+        double normalUnitX = -tangentUnitY;
+        double normalUnitY = tangentUnitX;
+
+        double scaledNormalX = normalUnitX * 100;
+        double scaledNormalY = normalUnitY * 100;
+
+        Point tangentStart = currentPoint;
+        Point tangentEnd(
+            currentPoint.x() + scaledTangentX,
+            currentPoint.y() + scaledTangentY
+        );
+
+        Point normalStart = currentPoint;
+        Point normalEnd(
+            currentPoint.x() + scaledNormalX,
+            currentPoint.y() + scaledNormalY
+        );
+
+        m_tangentLines.emplace_back(tangentStart, tangentEnd);
+        m_normalLines.emplace_back(normalStart, normalEnd);
+    }
 }
 
 

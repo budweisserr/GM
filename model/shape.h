@@ -37,16 +37,19 @@ public:
 
     std::vector<Point> getPoints() const { return m_points; }
 
+    void calculateTangentAndNormalLines();
+
 public slots:
     void transform(double **matrix);
 
 private:
     std::vector<Point> m_pointsLeftUpper, m_pointsRightUpper, m_pointsLeftLower, m_pointsRightLower;
     std::vector<Point> m_points;
-    double computeDerivativeX(double x, double y) const;
-    double computeDerivativeY(double x, double y) const;
+    std::vector<Line> m_tangentLines;
+    std::vector<Line> m_normalLines;
     Line computeNormal(Point& point) const;
     Line computeTangent(Point& point) const;
+
     double a = 4;
     double b = 2.8;
     double d = -1;
