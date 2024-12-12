@@ -11,9 +11,11 @@
 #include <QGraphicsItem>
 #include <QGraphicsSceneWheelEvent>
 #include <QPaintEvent>
+#include <QTimer>
 #include "grid.h"
 #include "drawing_interface.h"
-#include "figure.h"
+#include <math.h>
+#include "shape.h"
 
 class Draw final : public QObject, public QGraphicsItem {
     Q_OBJECT
@@ -21,8 +23,6 @@ class Draw final : public QObject, public QGraphicsItem {
 public:
     explicit Draw(QGraphicsScene *scene = nullptr);
     ~Draw() override = default;
-   // signals:
-    //void pixelsPerCmChanged(double pixelsPerCm);
 
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override;
     QRectF boundingRect() const override;
@@ -31,32 +31,52 @@ public:
     void resetScene();
     void setPixelsPerCm(double pixelsPerCm);
     void setGridSize(int size);
-    void applyAffineTransformation(double Xx, double Xy, double Yx, double Yy, double Ox, double Oy);
-    void applyProjectiveTransformation(double Xx, double Xy, double Xw, double Yx, double Yy, double Yw, double Ox, double Oy, double Ow);
 
-    void applyShiftToFigure(double shiftX, double shiftY);
-    void applyRotateToFigure(double x, double y, double angle);
-    void applySymmetryToFigure(double x, double y);
+    void applyShiftToShape(double shiftX, double shiftY);
+    void applyRotateToShape(double x, double y, double angle);
+
+    void animateShape(AnimationType type);
+
+    std::vector<Point> getPoints() const { return m_shape->getPoints(); }
 
     signals:
     void pixelsPerCmChanged(double pixelsPerCm);
+    void animationChangedA(double value);
+    void animationChangedB(double value);
+    void animationChangedC(double value);
+    void currentPointChanged(const QString& point);
+
+    private slots:
+    void updateAnimation();
+
+    public slots:
+    void toggleNormalVisibility(bool checked);
+    void toggleTangentVisibility(bool checked);
+    void togglePointVisibility(bool checked);
+    void showPreviousPoint();
+    void showNextPoint();
 protected:
-    /*
-    void paintEvent(QPaintEvent* event) override;
-    void resizeEvent(QResizeEvent* event) override;
-    void wheelEvent(QWheelEvent* event) override;
-    */
     void wheelEvent(QGraphicsSceneWheelEvent *event) override;
 
 private:
     std::unique_ptr<CoordinateGrid> m_grid;
-    std::unique_ptr<Figure> m_figure;
+    std::unique_ptr<Shape> m_shape;
 
     void updateScene();
+
     int m_gridSize = 15;
     double m_pixelsPerCm = 37.795275591;
 
     double ** m_matrix;
+
+    QTimer *m_animationTimer = nullptr;
+    AnimationType m_animationType = AnimationType::ANIMATE_FULL;
+
+    bool m_normalVisible = false;
+    bool m_tangentVisible = false;
+    bool m_pointVisible = false;
+    size_t m_currentPointIndex = 0;
+
 
 };
 

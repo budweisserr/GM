@@ -1,9 +1,8 @@
 #include "drawing.h"
 
-
 Draw::Draw(QGraphicsScene* scene)
     : m_grid(new CoordinateGrid()),
-      m_figure(new Figure())
+      m_shape(new Shape())
       {
     if (scene) {
         scene->addItem(this);
@@ -26,10 +25,23 @@ void Draw::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWid
     painter->fillRect(boundingRect(), Qt::white);
 
     painter->scale(1, -1);
-    painter->translate(widget->width() / 3, -widget->height());
+    painter->translate(widget->width() / 2, -widget->height() / 2);
 
     m_grid->draw(painter);
-    m_figure->draw(painter);
+    m_shape->draw(painter);
+
+    if (m_normalVisible && !m_shape->getPoints().empty()) {
+        m_shape->drawNormal(painter, m_shape->getPoints()[m_currentPointIndex]);
+    }
+
+    if (m_tangentVisible && !m_shape->getPoints().empty()) {
+        m_shape->drawTangent(painter, m_shape->getPoints()[m_currentPointIndex]);
+    }
+
+    if (m_pointVisible && !m_shape->getPoints().empty()) {
+        m_shape->drawPoint(painter, m_shape->getPoints()[m_currentPointIndex]);
+    }
+        
 }
 
 
@@ -54,7 +66,7 @@ void Draw::wheelEvent(QGraphicsSceneWheelEvent* event) {
 
 void Draw::updateScene() {
     m_grid->computeGrid(m_gridSize, m_pixelsPerCm);
-    m_figure->computeFigure(m_pixelsPerCm);
+    m_shape->computeShape(m_gridSize, m_pixelsPerCm);
     update();
 }
 
@@ -69,42 +81,13 @@ void Draw::setPixelsPerCm(double pixelsPerCm) {
 }
 
 void Draw::resetScene() {
+    m_shape->setA(4);
+    m_shape->setB(2.8);
+    m_shape->setD(-1);
     updateScene();
 }
 
-void Draw::applyAffineTransformation(double Xx, double Xy, double Yx, double Yy, double Ox, double Oy) {
-    m_matrix[0][0] = Xx;
-    m_matrix[0][1] = Xy;
-    m_matrix[0][2] = 0;
-    m_matrix[1][0] = Yx;
-    m_matrix[1][1] = Yy;
-    m_matrix[1][2] = 0;
-    m_matrix[2][0] = Ox * m_pixelsPerCm;
-    m_matrix[2][1] = Oy * m_pixelsPerCm;
-    m_matrix[2][2] = 1;
-
-    m_grid->transform(m_matrix);
-    m_figure->transform(m_matrix);
-    update();
-}
-
-void Draw::applyProjectiveTransformation(double Xx, double Xy, double Xw, double Yx, double Yy, double Yw, double Ox, double Oy, double Ow) {
-    m_matrix[0][0] = Xx * Xw * m_pixelsPerCm;
-    m_matrix[0][1] = Xy * Xw * m_pixelsPerCm;
-    m_matrix[0][2] = Xw;
-    m_matrix[1][0] = Yx * Yw * m_pixelsPerCm;
-    m_matrix[1][1] = Yy * Yw * m_pixelsPerCm;
-    m_matrix[1][2] = Yw;
-    m_matrix[2][0] = Ox * Ow * m_pixelsPerCm;
-    m_matrix[2][1] = Oy * Ow * m_pixelsPerCm;
-    m_matrix[2][2] = Ow;
-
-    m_grid->transform(m_matrix);
-    m_figure->transform(m_matrix);
-    update();
-}
-
-void Draw::applyShiftToFigure(double shiftX, double shiftY) {
+void Draw::applyShiftToShape(double shiftX, double shiftY) {
     m_matrix[0][0] = 1;
     m_matrix[0][1] = 0;
     m_matrix[0][2] = 0;
@@ -115,11 +98,11 @@ void Draw::applyShiftToFigure(double shiftX, double shiftY) {
     m_matrix[2][1] = shiftY * m_pixelsPerCm;
     m_matrix[2][2] = 1;
 
-    m_figure->transform(m_matrix);
+    m_shape->transform(m_matrix);
     update();
 }
 
-void Draw::applyRotateToFigure(double x, double y, double angle) {
+void Draw::applyRotateToShape(double x, double y, double angle) {
     double rad = angle * M_PI / 180.0;
     m_matrix[0][0] = cos(rad);
     m_matrix[0][1] = sin(rad);
@@ -131,25 +114,113 @@ void Draw::applyRotateToFigure(double x, double y, double angle) {
     m_matrix[2][1] = -x * m_pixelsPerCm * sin(rad) - y * m_pixelsPerCm * (cos(rad) - 1);
     m_matrix[2][2] = 1;
 
-    m_figure->transform(m_matrix);
+    m_shape->transform(m_matrix);
     update();
 }
 
-void Draw::applySymmetryToFigure(double x, double y) {
-    m_matrix[0][0] = -1;
-    m_matrix[0][1] = 0;
-    m_matrix[0][2] = 0;
-    m_matrix[1][0] = 0;
-    m_matrix[1][1] = -1;
-    m_matrix[1][2] = 0;
-    m_matrix[2][0] = 2 * x * m_pixelsPerCm;
-    m_matrix[2][1] = 2 * y * m_pixelsPerCm;
-    m_matrix[2][2] = 1;
+void Draw::animateShape(AnimationType type) {
+    m_animationType = type;
+    if (!m_animationTimer) {
+        m_animationTimer = new QTimer(this);
+        connect(m_animationTimer, &QTimer::timeout, this, &Draw::updateAnimation);
+        m_animationTimer->start(1);
+    } else {
+        m_animationTimer->stop();
+        delete m_animationTimer;
+        m_animationTimer = nullptr;
+    }
+}
 
-    m_figure->transform(m_matrix);
+void Draw::updateAnimation() {
+    static bool direction = true; // true for increasing, false for decreasing
+    double m_animationStep = 0.1;
+    double m_animationTarget = 10;
+    double m_animationMin = -10;
+
+    switch (m_animationType) {
+        case AnimationType::ANIMATE_A:
+            if (direction) {
+                m_shape->setA(m_shape->getA() + m_animationStep);
+                if (m_shape->getA() >= m_animationTarget) direction = false;
+            } else {
+                m_shape->setA(m_shape->getA() - m_animationStep);
+                if (m_shape->getA() <= m_animationMin) direction = true;
+            }
+            emit animationChangedA(m_shape->getA());
+            break;
+        case AnimationType::ANIMATE_B:
+            if (direction) {
+                m_shape->setB(m_shape->getB() + m_animationStep);
+                if (m_shape->getB() >= m_animationTarget) direction = false;
+            } else {
+                m_shape->setB(m_shape->getB() - m_animationStep);
+                if (m_shape->getB() <= m_animationMin) direction = true;
+            }
+            emit animationChangedB(m_shape->getB());
+            break;
+        case AnimationType::ANIMATE_C:
+            if (direction) {
+                m_shape->setD(m_shape->getD() + m_animationStep);
+                if (m_shape->getD() >= m_animationTarget) direction = false;
+            } else {
+                m_shape->setD(m_shape->getD() - m_animationStep);
+                if (m_shape->getD() <= m_animationMin) direction = true;
+            }
+            emit animationChangedC(m_shape->getD());
+            break;
+        case AnimationType::ANIMATE_FULL:
+            if (direction) {
+                m_shape->setA(m_shape->getA() + m_animationStep);
+                m_shape->setB(m_shape->getB() + m_animationStep / 2);
+                m_shape->setD(m_shape->getD() + m_animationStep / 3);
+                if (m_shape->getA() >= m_animationTarget || m_shape->getB() >= m_animationTarget || m_shape->getD() >= m_animationTarget) direction = false;
+            } else {
+                m_shape->setA(m_shape->getA() - m_animationStep);
+                m_shape->setB(m_shape->getB() - m_animationStep / 2);
+                m_shape->setD(m_shape->getD() - m_animationStep / 3);
+                if (m_shape->getA() <= m_animationMin || m_shape->getB() <= m_animationMin || m_shape->getD() <= m_animationMin) direction = true;
+            }
+            emit animationChangedA(m_shape->getA());
+            emit animationChangedB(m_shape->getB());
+            emit animationChangedC(m_shape->getD());
+            break;
+    }
+    m_shape->computeShape(m_gridSize, m_pixelsPerCm);
+    updateScene();
+}
+
+void Draw::toggleNormalVisibility(bool checked) {
+    m_normalVisible = checked;
     update();
 }
 
+void Draw::toggleTangentVisibility(bool checked) {
+    m_tangentVisible = checked;
+    update();
+}
+
+void Draw::togglePointVisibility(bool checked) {
+    m_pointVisible = checked;
+    update();
+}
+
+void Draw::showPreviousPoint() {
+    if (!m_shape->getPoints().empty()) {
+        m_currentPointIndex = (m_currentPointIndex - 10 + m_shape->getPoints().size()) % m_shape->getPoints().size();
+        update();
+    }
+    QString point = QString("%1, %2").arg(m_shape->getPoints().at(m_currentPointIndex).x() / m_pixelsPerCm).arg(m_shape->getPoints().at(m_currentPointIndex).y() / m_pixelsPerCm);
+    emit currentPointChanged(point);
+}
+
+void Draw::showNextPoint() {
+    if (!m_shape->getPoints().empty()) {
+        m_currentPointIndex = (m_currentPointIndex + 10) % m_shape->getPoints().size();
+        update();
+    }
+    QString point = QString("%1, %2").arg(m_shape->getPoints().at(m_currentPointIndex).x() / m_pixelsPerCm).arg(m_shape->getPoints().at(m_currentPointIndex).y() / m_pixelsPerCm);
+    emit currentPointChanged(point);
+}
 
 
 
