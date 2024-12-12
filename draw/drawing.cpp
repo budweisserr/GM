@@ -31,10 +31,12 @@ void Draw::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWid
     m_shape->draw(painter);
 
     if (m_normalVisible && !m_shape->getPoints().empty()) {
+        m_shape->calculateTangentAndNormalLines();
         m_shape->drawNormal(painter, m_shape->getPoints()[m_currentPointIndex]);
     }
 
     if (m_tangentVisible && !m_shape->getPoints().empty()) {
+        m_shape->calculateTangentAndNormalLines();
         m_shape->drawTangent(painter, m_shape->getPoints()[m_currentPointIndex]);
     }
 
