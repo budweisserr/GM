@@ -4,16 +4,14 @@ cmake_minimum_required(VERSION 3.16)
 set(MODEL_SOURCES
         point.cpp
         grid.cpp
-        circle.cpp
-        figure.cpp
+        shape.cpp
         line.cpp
 )
 
 set(MODEL_HEADERS
         point.h
         grid.h
-        circle.h
-        figure.h
+        shape.h
         line.h
 )
 

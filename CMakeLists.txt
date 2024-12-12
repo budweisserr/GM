@@ -21,16 +21,14 @@ add_subdirectory(window)
 set(MODEL_SOURCES
         model/point.cpp
         model/grid.cpp
-        model/circle.cpp
-        model/figure.cpp
+        model/shape.cpp
         model/line.cpp
 )
 
 set(MODEL_HEADERS
         model/point.h
         model/grid.h
-        model/circle.h
-        model/figure.h
+        model/shape.h
         model/line.h
 )
 
