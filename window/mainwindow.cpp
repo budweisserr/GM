@@ -26,7 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_mainLayout->addWidget(m_splitter);
 
     setWindowTitle("Transformations");
-    resize(800, 600);
+    resize(1920, 1080);
 }
 
 MainWindow::~MainWindow()
@@ -59,17 +59,13 @@ void MainWindow::createControls()
     m_noneRadioButton = new QRadioButton("None");
     m_shiftRadioButton = new QRadioButton("Shift");
     m_rotateRadioButton = new QRadioButton("Rotate");
-    m_symmetryRadioButton = new QRadioButton("Symmetry");
-    m_affineRadioButton = new QRadioButton("Affine");
-    m_projectiveRadioButton = new QRadioButton("Projective");
+    m_animationRadioButton = new QRadioButton("Animation");
 
     m_transformationGroup = new QButtonGroup(this);
     m_transformationGroup->addButton(m_noneRadioButton, 0);
     m_transformationGroup->addButton(m_shiftRadioButton, 1);
     m_transformationGroup->addButton(m_rotateRadioButton, 2);
-    m_transformationGroup->addButton(m_symmetryRadioButton, 3);
-    m_transformationGroup->addButton(m_affineRadioButton, 4);
-    m_transformationGroup->addButton(m_projectiveRadioButton, 5);
+    m_transformationGroup->addButton(m_animationRadioButton, 3);
     connect(m_transformationGroup, SIGNAL(buttonClicked(int)), this, SLOT(updateTransformationType(int)));
 
     m_resetButton = new QPushButton("Reset", this);
@@ -81,18 +77,24 @@ void MainWindow::createControls()
     rectangleLayout->setSpacing(10);
     rectangleLayout->setAlignment(Qt::AlignTop);
 
+
+    m_showPointCheckBox = new QCheckBox("Show Point", this);
+    m_showNormalCheckBox = new QCheckBox("Show Normal", this);
+    m_showTangentCheckBox = new QCheckBox("Show Tangent", this);
+
+    connect(m_showNormalCheckBox, &QCheckBox::stateChanged, m_draw, &Draw::toggleNormalVisibility);
+    connect(m_showTangentCheckBox, &QCheckBox::stateChanged, m_draw, &Draw::toggleTangentVisibility);
+    connect (m_showPointCheckBox, &QCheckBox::stateChanged, this, &MainWindow::togglePoint);
+    connect(m_showPointCheckBox, &QCheckBox::stateChanged, m_draw, &Draw::togglePointVisibility);
+
     m_transformationStack = new QStackedWidget(this);
-    m_affineControls = createAffineControls();
-    m_projectiveControls = createProjectiveControls();
     m_shiftControls = createShiftControls();
     m_rotateControls = createRotateControls();
-    m_symmetryControls = createSymmetryControls();
+    m_animationControls = createAnimationControls();
     m_transformationStack->addWidget(new QWidget());
     m_transformationStack->addWidget(m_shiftControls);
     m_transformationStack->addWidget(m_rotateControls);
-    m_transformationStack->addWidget(m_symmetryControls);
-    m_transformationStack->addWidget(m_affineControls);
-    m_transformationStack->addWidget(m_projectiveControls);
+    m_transformationStack->addWidget(m_animationControls);
 
     rectangleLayout->addWidget(m_transformationStack, 0, Qt::AlignCenter);
     rectangleGroupBox->setMinimumSize(300, 200);
@@ -107,12 +109,13 @@ void MainWindow::createControls()
     m_controlsLayout->addWidget(m_noneRadioButton);
     m_controlsLayout->addWidget(m_shiftRadioButton);
     m_controlsLayout->addWidget(m_rotateRadioButton);
-    m_controlsLayout->addWidget(m_symmetryRadioButton);
-    m_controlsLayout->addWidget(m_affineRadioButton);
-    m_controlsLayout->addWidget(m_projectiveRadioButton);
+    m_controlsLayout->addWidget(m_animationRadioButton);
     m_controlsLayout->addSpacing(20);
     m_controlsLayout->addWidget(rectangleGroupBox);
     m_controlsLayout->addWidget(m_resetButton);
+    m_controlsLayout->addWidget(m_showPointCheckBox);
+    m_controlsLayout->addWidget(m_showNormalCheckBox);
+    m_controlsLayout->addWidget(m_showTangentCheckBox);
     m_controlsLayout->addStretch();
 }
 
@@ -124,176 +127,6 @@ void MainWindow::updateScale(double value)
 void MainWindow::updateGridSize(int value)
 {
     m_draw->setGridSize(value);
-}
-
-QWidget* MainWindow::createProjectiveControls()
-{
-    auto *projectiveWidget = new QWidget(this);
-    m_transformationLayout = new QVBoxLayout(projectiveWidget);
-
-    auto* projectiveLabel = new QLabel("Projective Transformation:", this);
-
-    auto* matrixLayout = new QGridLayout();
-
-    auto* XxProjectiveLabel = new QLabel("Xx:", this);
-    XxProjective = new QDoubleSpinBox(this);
-    XxProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
-    XxProjective->setValue(1.0);
-
-    auto* XyProjectiveLabel = new QLabel("Xy:", this);
-    XyProjective = new QDoubleSpinBox(this);
-    XyProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
-    XyProjective->setValue(0.0);
-
-    auto* XwProjectiveLabel = new QLabel("Xw:", this);
-    XwProjective = new QDoubleSpinBox(this);
-    XwProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
-    XwProjective->setValue(0.0);
-
-    auto* YxProjectiveLabel = new QLabel("Yx:", this);
-    YxProjective = new QDoubleSpinBox(this);
-    YxProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
-    YxProjective->setValue(0.0);
-
-    auto* YyProjectiveLabel = new QLabel("Yy:", this);
-    YyProjective = new QDoubleSpinBox(this);
-    YyProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
-    YyProjective->setValue(1.0);
-
-    auto* YwProjectiveLabel = new QLabel("Yw:", this);
-    YwProjective = new QDoubleSpinBox(this);
-    YwProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
-    YwProjective->setValue(0.0);
-
-    auto* OxProjectiveLabel = new QLabel("Ox:", this);
-    OxProjective = new QDoubleSpinBox(this);
-    OxProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
-    OxProjective->setValue(0.0);
-
-    auto* OyProjectiveLabel = new QLabel("Oy:", this);
-    OyProjective = new QDoubleSpinBox(this);
-    OyProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
-    OyProjective->setValue(0.0);
-
-    auto* OwProjectiveLabel = new QLabel("Ow:", this);
-    OwProjective = new QDoubleSpinBox(this);
-    OwProjective->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
-    OwProjective->setValue(1.0);
-
-    matrixLayout->addWidget(XxProjectiveLabel, 0, 0);
-    matrixLayout->addWidget(XxProjective, 0, 1);
-    matrixLayout->addWidget(XyProjectiveLabel, 0, 2);
-    matrixLayout->addWidget(XyProjective, 0, 3);
-    matrixLayout->addWidget(XwProjectiveLabel, 0, 4);
-    matrixLayout->addWidget(XwProjective, 0, 5);
-
-    matrixLayout->addWidget(YxProjectiveLabel, 1, 0);
-    matrixLayout->addWidget(YxProjective, 1, 1);
-    matrixLayout->addWidget(YyProjectiveLabel, 1, 2);
-    matrixLayout->addWidget(YyProjective, 1, 3);
-    matrixLayout->addWidget(YwProjectiveLabel, 1, 4);
-    matrixLayout->addWidget(YwProjective, 1, 5);
-
-    matrixLayout->addWidget(OxProjectiveLabel, 2, 0);
-    matrixLayout->addWidget(OxProjective, 2, 1);
-    matrixLayout->addWidget(OyProjectiveLabel, 2, 2);
-    matrixLayout->addWidget(OyProjective, 2, 3);
-    matrixLayout->addWidget(OwProjectiveLabel, 2, 4);
-    matrixLayout->addWidget(OwProjective, 2, 5);
-
-    m_projectiveButton = new QPushButton("Apply", this);
-    connect(m_projectiveButton, &QPushButton::clicked, [this]() {
-        double Xx = XxProjective->value();
-        double Xy = XyProjective->value();
-        double Xw = XwProjective->value();
-        double Yx = YxProjective->value();
-        double Yy = YyProjective->value();
-        double Yw = YwProjective->value();
-        double Ox = OxProjective->value();
-        double Oy = OyProjective->value();
-        double Ow = OwProjective->value();
-
-        m_draw->applyProjectiveTransformation(Xx, Xy, Xw, Yx, Yy, Yw, Ox, Oy, Ow);
-    });
-
-    m_transformationLayout->addWidget(projectiveLabel);
-    m_transformationLayout->addLayout(matrixLayout);
-    m_transformationLayout->addWidget(m_projectiveButton);
-
-    return projectiveWidget;
-}
-
-QWidget* MainWindow::createAffineControls()
-{
-    auto* affineWidget = new QWidget(this);
-    m_transformationLayout = new QVBoxLayout(affineWidget);
-
-    auto* affineLabel = new QLabel("Affine Transformation:", this);
-
-    auto* matrixLayout = new QGridLayout();
-
-    auto* XxAffineLabel = new QLabel("Xx:", this);
-    XxAffine = new QDoubleSpinBox(this);
-    XxAffine->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
-    XxAffine->setValue(1.0);
-
-    auto* XyAffineLabel = new QLabel("Xy:", this);
-    XyAffine = new QDoubleSpinBox(this);
-    XyAffine->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
-    XyAffine->setValue(0.0);
-
-    auto* YxAffineLabel = new QLabel("Yx:", this);
-    YxAffine = new QDoubleSpinBox(this);
-    YxAffine->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
-    YxAffine->setValue(0.0);
-
-    auto* YyAffineLabel = new QLabel("Yy:", this);
-    YyAffine = new QDoubleSpinBox(this);
-    YyAffine->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
-    YyAffine->setValue(1.0);
-
-    auto* OxAffineLabel = new QLabel("Ox:", this);
-    OxAffine = new QDoubleSpinBox(this);
-    OxAffine->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
-    OxAffine->setValue(0.0);
-
-    auto* OyAffineLabel = new QLabel("Oy:", this);
-    OyAffine = new QDoubleSpinBox(this);
-    OyAffine->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
-    OyAffine->setValue(0.0);
-
-    matrixLayout->addWidget(XxAffineLabel, 0, 0);
-    matrixLayout->addWidget(XxAffine, 0, 1);
-    matrixLayout->addWidget(XyAffineLabel, 0, 2);
-    matrixLayout->addWidget(XyAffine, 0, 3);
-
-    matrixLayout->addWidget(YxAffineLabel, 1, 0);
-    matrixLayout->addWidget(YxAffine, 1, 1);
-    matrixLayout->addWidget(YyAffineLabel, 1, 2);
-    matrixLayout->addWidget(YyAffine, 1, 3);
-
-    matrixLayout->addWidget(OxAffineLabel, 2, 0);
-    matrixLayout->addWidget(OxAffine, 2, 1);
-    matrixLayout->addWidget(OyAffineLabel, 2, 2);
-    matrixLayout->addWidget(OyAffine, 2, 3);
-
-    m_affineButton = new QPushButton("Apply", this);
-    connect(m_affineButton, &QPushButton::clicked, [this]() {
-        double Xx = XxAffine->value();
-        double Xy = XyAffine->value();
-        double Yx = YxAffine->value();
-        double Yy = YyAffine->value();
-        double Ox = OxAffine->value();
-        double Oy = OyAffine->value();
-
-        m_draw->applyAffineTransformation(Xx, Xy, Yx, Yy, Ox, Oy);
-    });
-
-    m_transformationLayout->addWidget(affineLabel);
-    m_transformationLayout->addLayout(matrixLayout);
-    m_transformationLayout->addWidget(m_affineButton);
-
-    return affineWidget;
 }
 
 QWidget* MainWindow::createShiftControls() {
@@ -312,12 +145,12 @@ QWidget* MainWindow::createShiftControls() {
     QLabel* shiftXLabel = new QLabel("Shift X:", this);
     m_shiftXSpinBox = new QDoubleSpinBox(this);
     m_shiftXSpinBox->setValue(0.0);
-    m_shiftXSpinBox->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
+    m_shiftXSpinBox->setRange(-999, std::numeric_limits<double>::max());
 
     QLabel* shiftYLabel = new QLabel("Shift Y:", this);
     m_shiftYSpinBox = new QDoubleSpinBox(this);
     m_shiftYSpinBox->setValue(0.0);
-    m_shiftYSpinBox->setRange(std::numeric_limits<double>::min(), std::numeric_limits<double>::max());
+    m_shiftYSpinBox->setRange(-999, std::numeric_limits<double>::max());
 
     shiftControlsLayout->addWidget(shiftXLabel);
     shiftControlsLayout->addWidget(m_shiftXSpinBox);
@@ -328,7 +161,7 @@ QWidget* MainWindow::createShiftControls() {
     connect(m_shiftButton, &QPushButton::clicked, [this]() {
         double shiftX = m_shiftXSpinBox->value();
         double shiftY = m_shiftYSpinBox->value();
-        m_draw->applyShiftToFigure(shiftX, shiftY);
+        m_draw->applyShiftToShape(shiftX, shiftY);
     });
 
     shiftLayout->addWidget(shiftLabel);
@@ -379,7 +212,7 @@ QWidget *MainWindow::createRotateControls() {
         double y = m_yRotateSpinBox->value();
         double angle = m_angleRotateSpinBox->value();
 
-        m_draw->applyRotateToFigure(x, y, angle);
+        m_draw->applyRotateToShape(x, y, angle);
     });
 
     rotateLayout->addWidget(rotateLabel);
@@ -389,49 +222,130 @@ QWidget *MainWindow::createRotateControls() {
     return rotateWidget;
 }
 
-QWidget *MainWindow::createSymmetryControls() {
-    auto *symmetryWidget = new QWidget(this);
+QWidget *MainWindow::createAnimationControls() {
+    auto *animationWidget = new QWidget(this);
 
-    auto *symmetryLayout = new QVBoxLayout(symmetryWidget);
+    auto *animationLayout = new QVBoxLayout(animationWidget);
 
-    symmetryLayout->setSpacing(5);
-    symmetryLayout->setContentsMargins(5, 5, 5, 5);
+    animationLayout->setSpacing(5);
+    animationLayout->setContentsMargins(5, 5, 5, 5);
 
-    auto *symmetryControlsLayout = new QHBoxLayout();
-    symmetryControlsLayout->setSpacing(5);
+    auto *animationControlsLayout = new QVBoxLayout();
+    animationControlsLayout->setSpacing(5);
 
-    auto *symmetryLabel = new QLabel("Symmetry:", this);
-    auto *xSymmetryLabel = new QLabel("X:", this);
-    m_xSymmetry = new QDoubleSpinBox(this);
-    m_xSymmetry->setValue(0.0);
-    m_xSymmetry->setRange(-10.0, m_gridSizeSpinBox->value());
+    QLabel *animationLabel = new QLabel("Animation:", this);
 
-    auto *ySymmetryLabel = new QLabel("Y:", this);
-    m_ySymmetry = new QDoubleSpinBox(this);
-    m_ySymmetry->setValue(0.0);
-    m_ySymmetry->setRange(-10.0, m_gridSizeSpinBox->value());
+    QLabel *animationALabel = new QLabel("a:", this);
+    m_animationASpinBox = new QDoubleSpinBox(this);
+    m_animationASpinBox->setValue(0.0);
+    m_animationASpinBox->setRange(-999, std::numeric_limits<double>::max());
 
-    symmetryControlsLayout->addWidget(xSymmetryLabel);
-    symmetryControlsLayout->addWidget(m_xSymmetry);
-    symmetryControlsLayout->addWidget(ySymmetryLabel);
-    symmetryControlsLayout->addWidget(m_ySymmetry);
+    m_animationAButton = new QPushButton("Apply", this);
 
-    m_symmetryButton = new QPushButton("Apply", this);
-    connect(m_symmetryButton, &QPushButton::clicked, [this]() {
-        double x = m_xSymmetry->value();
-        double y = m_ySymmetry->value();
-        m_draw->applySymmetryToFigure(x, y);
+    QLabel *animationBLabel = new QLabel("b:", this);
+    m_animationBSpinBox = new QDoubleSpinBox(this);
+    m_animationBSpinBox->setValue(0.0);
+    m_animationBSpinBox->setRange(-999, std::numeric_limits<double>::max());
+
+    m_animationBButton = new QPushButton("Apply", this);
+
+    QLabel *animationCLabel = new QLabel("d:", this);
+    m_animationCSpinBox = new QDoubleSpinBox(this);
+    m_animationCSpinBox->setValue(0.0);
+    m_animationCSpinBox->setRange(-999, std::numeric_limits<double>::max());
+
+    m_animationCButton = new QPushButton("Apply", this);
+
+    m_animationFullButton = new QPushButton("Apply to all", this);
+
+    connect(m_animationAButton, &QPushButton::clicked, [this]() {
+        m_draw->animateShape(AnimationType::ANIMATE_A);
     });
 
-    symmetryLayout->addWidget(symmetryLabel);
-    symmetryLayout->addLayout(symmetryControlsLayout);
-    symmetryLayout->addWidget(m_symmetryButton);
+    connect(m_animationBButton, &QPushButton::clicked, [this]() {
+        m_draw->animateShape(AnimationType::ANIMATE_B);
+    });
 
-    return symmetryWidget;
+    connect(m_animationCButton, &QPushButton::clicked, [this]() {
+        m_draw->animateShape(AnimationType::ANIMATE_C);
+    });
+
+    connect(m_animationFullButton, &QPushButton::clicked, [this]() {
+        m_draw->animateShape(AnimationType::ANIMATE_FULL);
+    });
+
+    connect(m_draw, &Draw::animationChangedA, m_animationASpinBox, &QDoubleSpinBox::setValue);
+    connect(m_draw, &Draw::animationChangedB, m_animationBSpinBox, &QDoubleSpinBox::setValue);
+    connect(m_draw, &Draw::animationChangedC, m_animationCSpinBox, &QDoubleSpinBox::setValue);
+
+    animationControlsLayout->addWidget(animationALabel);
+    animationControlsLayout->addWidget(m_animationASpinBox);
+    animationControlsLayout->addWidget(m_animationAButton);
+
+    animationControlsLayout->addWidget(animationBLabel);
+    animationControlsLayout->addWidget(m_animationBSpinBox);
+    animationControlsLayout->addWidget(m_animationBButton);
+
+    animationControlsLayout->addWidget(animationCLabel);
+    animationControlsLayout->addWidget(m_animationCSpinBox);
+    animationControlsLayout->addWidget(m_animationCButton);
+
+    animationLayout->addWidget(animationLabel);
+    animationLayout->addLayout(animationControlsLayout);
+    animationLayout->addWidget(m_animationFullButton);
+
+    return animationWidget;
+}
+
+QWidget* MainWindow::createPointControls() {
+    auto* pointWidget = new QWidget(this);
+
+    auto* pointLayout = new QVBoxLayout(pointWidget);
+    pointLayout->setSpacing(5);
+    pointLayout->setContentsMargins(5, 5, 5, 5);
+    connect(m_draw, &Draw::currentPointChanged, this, &MainWindow::updateCurrentPointLabel);
+
+    QLabel* pointLabel = new QLabel("Current Point:", this);
+    currentPointLabel = new QLabel("0,0", this);
+
+    QPushButton* prevPointButton = new QPushButton("Previous Point", this);
+    QPushButton* nextPointButton = new QPushButton("Next Point", this);
+
+    connect(prevPointButton, &QPushButton::clicked, m_draw, &Draw::showPreviousPoint);
+
+    connect(nextPointButton, &QPushButton::clicked, m_draw,&Draw::showNextPoint);
+
+
+    pointLayout->addWidget(pointLabel);
+    pointLayout->addWidget(currentPointLabel);
+    pointLayout->addWidget(prevPointButton);
+    pointLayout->addWidget(nextPointButton);
+
+    return pointWidget;
 }
 
 void MainWindow::updateTransformationType(const int id) const {
     m_transformationStack->setCurrentIndex(id);
+}
+
+void MainWindow::togglePoint(int state) {
+    if (state == Qt::Checked) {
+        if (!m_pointControlsWidget) {
+            m_pointControlsWidget = createPointControls();
+        }
+        m_controlsLayout->addWidget(m_pointControlsWidget);
+        m_pointControlsWidget->show();
+        updateCurrentPointLabel(QString("%1, %2").arg(m_draw->getPoints().at(0).x() / m_scaleSpinBox->value()).arg(m_draw->getPoints().at(0).y() / m_scaleSpinBox->value()));
+    } else {
+        if (m_pointControlsWidget) {
+            m_controlsLayout->removeWidget(m_pointControlsWidget);
+            m_pointControlsWidget->hide();
+        }
+    }
+}
+
+void MainWindow::updateCurrentPointLabel(const QString& point) {
+    currentPointLabel->setText(point);
 }
 
 
