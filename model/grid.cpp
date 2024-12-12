@@ -8,17 +8,20 @@ void CoordinateGrid::computeGrid(int& gridSize, double& pixelsPerCm) {
 }
 
 void CoordinateGrid::computeMainAxes(const int& gridSize, const double& pixelsPerCm) {
-    m_xAxis = Line(Point(0, 0), Point(gridSize * pixelsPerCm, 0));
-    m_yAxis = Line(Point(0, 0), Point(0, gridSize * pixelsPerCm));
+    m_xAxis = Line(Point(0, -gridSize * pixelsPerCm), Point(0, gridSize * pixelsPerCm));
+    m_yAxis = Line(Point(-gridSize * pixelsPerCm, 0), Point(gridSize * pixelsPerCm, 0));
 }
 
 void CoordinateGrid::computeGridLines(const int &gridSize, const double &pixelsPerCm) {
     m_gridLines.clear();
-    for (int i = 1; i <= gridSize; ++i) {
+    for (int i = -gridSize; i <= gridSize; ++i) {
+        if (i == 0) {
+            continue;
+        }
         double x = i * pixelsPerCm;
-        m_gridLines.emplace_back(Point(x, 0), Point(x, gridSize * pixelsPerCm));
+        m_gridLines.emplace_back(Point(x, -gridSize * pixelsPerCm), Point(x, gridSize * pixelsPerCm));
         double y = i * pixelsPerCm;
-        m_gridLines.emplace_back(Point(0, y), Point(gridSize * pixelsPerCm, y));
+        m_gridLines.emplace_back(Point(-gridSize * pixelsPerCm, y), Point(gridSize * pixelsPerCm, y));
     }
 }
 
